@@ -19,15 +19,9 @@ export function PaginatedResourceSection({
         );
 
         return (
-          <div>
-            <PreviousLink>
-              {isLoading ? (
-                'Loading...'
-              ) : (
-                <span>
-                  <span aria-hidden="true">↑</span> Load previous
-                </span>
-              )}
+          <div className="flex flex-col gap-4">
+            <PreviousLink className="btn btn-secondary self-center">
+              {isLoading ? 'Cargando…' : 'Ver anteriores'}
             </PreviousLink>
             {resourcesClassName ? (
               <div
@@ -40,14 +34,8 @@ export function PaginatedResourceSection({
             ) : (
               resourcesMarkup
             )}
-            <NextLink>
-              {isLoading ? (
-                'Loading...'
-              ) : (
-                <span>
-                  Load more <span aria-hidden="true">↓</span>
-                </span>
-              )}
+            <NextLink className="btn btn-secondary self-center">
+              {isLoading ? 'Cargando…' : 'Ver más'}
             </NextLink>
           </div>
         );

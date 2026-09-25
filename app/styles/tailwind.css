@@ -1,6 +1,732 @@
 /**
- * Configure Tailwind v4 in this file using CSS variables and directives:
- * https://tailwindcss.com/docs/v4-beta#css-first-configuration
+ * EST SA storefront theme — "Nocturne" design system, tuned to the EST
+ * violet (#691CB9). Tokens live in @theme so every value is both a CSS
+ * variable (var(--color-accent-500)) and a Tailwind utility
+ * (bg-accent-500, text-neutral-400, …).
+ *
+ * Tailwind v4 CSS-first config: https://tailwindcss.com/docs/theme
  */
 
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  --color-brand: #691cb9;
+  --color-bg: #14131d;
+  --color-surface: #1e1c2a;
+  --color-text: #e9e9ed;
+  --color-divider: color-mix(in srgb, #e9e9ed 13%, transparent);
+  --color-success: oklch(0.52 0.12 155);
+  --color-success-dot: oklch(0.75 0.14 155);
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+
+  --color-accent: #9a5cf0;
+  --color-accent-100: #f4ecff;
+  --color-accent-200: #e6d6ff;
+  --color-accent-300: #cfb2fb;
+  --color-accent-400: #b184f2;
+  --color-accent-500: #9a5cf0;
+  --color-accent-600: #7d34d6;
+  --color-accent-700: #5a1a9e;
+  --color-accent-800: #3d1470;
+  --color-accent-900: #251043;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
+
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-pop-in: popIn 0.35s var(--ease-out-soft) both;
+  --animate-fade-up: fadeUp 0.5s var(--ease-out-soft) both;
+  --animate-fade-in: fadeIn 0.2s both;
+  --animate-bump: bump 0.45s both;
+  --animate-blink: blink 1.6s infinite;
+  --animate-laser: laserY 2.6s ease-in-out infinite;
+  --animate-laser-sweep: laserSweep 1.4s ease-in-out infinite;
+  --animate-btn-scan: btnScan 0.7s linear infinite;
+  --animate-ring: ring 0.9s ease-out both;
+  --animate-flash: flash 0.6s both;
+  --animate-spin: spin 0.7s linear infinite;
+
+  @keyframes laserY {
+    0%,
+    100% {
+      top: 14%;
+    }
+    50% {
+      top: 82%;
+    }
+  }
+  @keyframes laserSweep {
+    0% {
+      top: 8%;
+      opacity: 0;
+    }
+    12%,
+    88% {
+      opacity: 1;
+    }
+    100% {
+      top: 92%;
+      opacity: 0;
+    }
+  }
+  @keyframes btnScan {
+    0% {
+      left: -20%;
+    }
+    100% {
+      left: 110%;
+    }
+  }
+  @keyframes popIn {
+    0% {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fadeUp {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes ring {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
+  @keyframes bump {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.35);
+    }
+  }
+  @keyframes flash {
+    0% {
+      opacity: 0.55;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+      radial-gradient(
+        1200px 520px at 78% -8%,
+        color-mix(in srgb, var(--color-brand) 26%, transparent),
+        transparent 70%
+      ),
+      var(--color-bg);
+    background-repeat: no-repeat;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+  }
+  a {
+    color: var(--color-accent-400);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: var(--color-accent-300);
+  }
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .motion-decor {
+      display: none !important;
+    }
+  }
+}
+
+/* ── Components ───────────────────────────────────────────────────────── */
+@layer components {
+  /* Rules fade to transparent at both ends — a Nocturne signature. */
+  .fade-rule-top,
+  .fade-rule-bottom,
+  .fade-rule-y {
+    --fade-rule: linear-gradient(
+      to right,
+      transparent,
+      var(--color-divider) 48px,
+      var(--color-divider) calc(100% - 48px),
+      transparent
+    );
+  }
+  .fade-rule-top {
+    background: var(--fade-rule) no-repeat top / 100% 1px;
+  }
+  .fade-rule-bottom {
+    background: var(--fade-rule) no-repeat bottom / 100% 1px;
+  }
+  .fade-rule-y {
+    background:
+      var(--fade-rule) no-repeat top / 100% 1px,
+      var(--fade-rule) no-repeat bottom / 100% 1px;
+  }
+
+  .container-site {
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+    padding-inline: 16px;
+    @media (min-width: 640px) {
+      padding-inline: 28px;
+    }
+  }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background 0.2s,
+      border-color 0.2s,
+      filter 0.2s;
+  }
+  .btn:hover {
+    color: var(--color-text);
+  }
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-brand {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: var(--color-neutral-100);
+  }
+  .btn-brand:not(:disabled):hover {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-600);
+    color: var(--color-neutral-100);
+  }
+  .btn-outline {
+    color: var(--color-accent-300);
+    border-color: var(--color-accent-500);
+  }
+  .btn-outline:hover {
+    color: var(--color-accent-200);
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+  .btn-secondary {
+    border-color: var(--color-divider);
+  }
+  .btn-secondary:hover {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+  .btn-ghost {
+    color: var(--color-accent-300);
+    padding-inline: 8px;
+    min-height: 32px;
+  }
+  .btn-ghost:hover {
+    color: var(--color-accent-200);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  .btn-icon {
+    width: 36px;
+    min-height: 36px;
+    height: 36px;
+    padding: 0;
+  }
+  .btn-lg {
+    min-height: 44px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+
+  /* forms */
+  .field > label,
+  .field-label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  }
+  .input {
+    width: 100%;
+    min-height: 40px;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--color-text);
+    caret-color: var(--color-accent);
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+  }
+  .input::placeholder {
+    color: var(--color-neutral-600);
+  }
+  .input:hover {
+    border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  }
+  .input:focus-visible {
+    border-color: var(--color-accent);
+    outline-offset: 0;
+  }
+  .input[aria-invalid='true'] {
+    border-color: oklch(0.65 0.18 25);
+  }
+
+  /* segmented control */
+  .seg {
+    display: inline-flex;
+    overflow: hidden;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+  }
+  .seg-opt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: var(--color-text);
+    text-decoration: none;
+    background: transparent;
+    border: 0;
+  }
+  .seg-opt + .seg-opt {
+    border-left: 1px solid var(--color-divider);
+  }
+  .seg-opt:hover {
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+  .seg-opt[aria-checked='true'],
+  .seg-opt[aria-current='true'],
+  .seg-opt[aria-pressed='true'] {
+    color: var(--color-accent-300);
+    box-shadow: inset 0 0 0 1px var(--color-accent);
+    background: transparent;
+  }
+  .seg-opt:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* tags */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+  .tag-accent {
+    background: var(--color-accent-800);
+    color: var(--color-accent-100);
+  }
+  .tag-neutral {
+    background: var(--color-neutral-900);
+    color: var(--color-neutral-300);
+  }
+
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-neutral-500);
+  }
+
+  /* Long-form HTML from Shopify (product descriptions, pages, policies). */
+  .rich-text {
+    color: var(--color-neutral-300);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .rich-text > * + * {
+    margin-top: 0.9em;
+  }
+  .rich-text h1,
+  .rich-text h2,
+  .rich-text h3,
+  .rich-text h4 {
+    color: var(--color-text);
+    margin-top: 1.4em;
+  }
+  .rich-text h2 {
+    font-size: 22px;
+  }
+  .rich-text h3 {
+    font-size: 18px;
+  }
+  .rich-text ul {
+    list-style: disc;
+    padding-left: 1.25em;
+  }
+  .rich-text ol {
+    list-style: decimal;
+    padding-left: 1.25em;
+  }
+  .rich-text a {
+    text-decoration: underline;
+  }
+  .rich-text img {
+    border-radius: var(--radius-md);
+  }
+  .rich-text table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .rich-text th,
+  .rich-text td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--color-divider);
+  }
+}
+
+/* ── Aside drawer (cart / search / mobile menu) ───────────────────────── */
+@layer components {
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--color-neutral-900) 55%, transparent);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .overlay.expanded {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  html:has(.overlay.expanded) {
+    overflow: hidden;
+  }
+  .overlay .close-outside {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: transparent;
+    border: 0;
+  }
+  .overlay > aside {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(440px, 100%);
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(100%);
+    transition: transform 0.35s var(--ease-out-soft);
+  }
+  .overlay.expanded > aside {
+    transform: none;
+  }
+}
+
+/* ── Skeleton pages (account, blog, search, policies) on the dark theme ── */
+@layer components {
+  .page-default {
+    padding-block: 32px 72px;
+  }
+  .page-default h1 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  .page-default h2 {
+    font-size: 22px;
+    margin: 24px 0 12px;
+  }
+  .page-default h3 {
+    font-size: 18px;
+    margin: 18px 0 8px;
+  }
+  .page-default p {
+    margin-bottom: 8px;
+  }
+  .page-default fieldset {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 16px;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+  }
+  .page-default legend {
+    font-weight: 500;
+    padding: 0 6px;
+  }
+  .page-default form {
+    max-width: 520px;
+  }
+  .page-default input:not([type='checkbox']):not([type='radio']),
+  .page-default select,
+  .page-default textarea {
+    width: 100%;
+    min-height: 38px;
+    padding: 6px 10px;
+    margin: 2px 0 8px;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+  }
+  .page-default button:not(.btn):not(.seg-opt) {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-divider);
+    color: var(--color-text);
+    background: transparent;
+  }
+  .page-default button:not(.btn):not(.seg-opt):hover {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+  .page-default code {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--color-neutral-900);
+  }
+  .page-default table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .page-default th,
+  .page-default td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid var(--color-divider);
+  }
+  .page-default th {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-neutral-500);
+    font-weight: 500;
+  }
+  .page-default img {
+    border-radius: var(--radius-md);
+  }
+
+  .account-logout {
+    display: inline-block;
+  }
+  .blog-grid,
+  .blogs-grid,
+  .collections-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    margin-bottom: 32px;
+  }
+  .blog-article-image {
+    aspect-ratio: 3/2;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+  .blog-article-image img {
+    height: 100%;
+    object-fit: cover;
+  }
+  .article img {
+    height: auto;
+    width: 100%;
+  }
+  .search-result {
+    margin-bottom: 24px;
+  }
+  .search-results-item {
+    margin-bottom: 8px;
+  }
+  .search-results-item a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .predictive-search {
+    padding: 0 22px 22px;
+    overflow-y: auto;
+  }
+  .predictive-search-result {
+    margin-bottom: 24px;
+  }
+  .predictive-search-result h5 {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-neutral-500);
+    margin-bottom: 8px;
+  }
+  .predictive-search-result-item {
+    margin-bottom: 8px;
+  }
+  .predictive-search-result-item a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-text);
+  }
+  .predictive-search-result-item img {
+    border-radius: 6px;
+  }
+  .order-search-form {
+    margin-bottom: 24px;
+  }
+  .order-search-inputs {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr;
+    @media (min-width: 640px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .order-search-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .order-search-active {
+    opacity: 0.7;
+    margin-left: 8px;
+  }
+  .mock-shop-notice {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: color-mix(
+      in srgb,
+      var(--color-brand) 14%,
+      var(--color-surface)
+    );
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--color-brand) 55%, transparent);
+  }
+  .mock-shop-notice h2 {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+  .mock-shop-notice p,
+  .mock-shop-notice .small {
+    font-size: 13px;
+    color: var(--color-neutral-400);
+  }
+  .mock-shop-notice code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--color-neutral-900);
+  }
+}

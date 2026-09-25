@@ -1,26 +1,142 @@
-import {Suspense} from 'react';
-import {Await, NavLink, useAsyncValue} from 'react-router';
+import {Suspense, useEffect, useRef, useState} from 'react';
+import {Await, Form, Link, NavLink, useAsyncValue} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
+import {
+  List,
+  LockSimple,
+  MagnifyingGlass,
+  ShoppingCartSimple,
+} from '~/components/Icons';
+
+/** Used until a logo is uploaded in Shopify admin → Settings → Brand. */
+const FALLBACK_LOGO_URL =
+  'https://www.estsa.cl/catalogo/img/estsa-logo-1619559287.jpg';
 
 /**
  * @param {HeaderProps}
  */
-export function Header({header, isLoggedIn, cart, publicStoreDomain}) {
+export function Header({
+  header,
+  isLoggedIn,
+  customer,
+  cart,
+  publicStoreDomain,
+}) {
   const {shop, menu} = header;
+
   return (
-    <header className="header">
-      <NavLink prefetch="intent" to="/" style={activeLinkStyle} end>
-        <strong>{shop.name}</strong>
-      </NavLink>
-      <HeaderMenu
-        menu={menu}
-        viewport="desktop"
-        primaryDomainUrl={header.shop.primaryDomain.url}
-        publicStoreDomain={publicStoreDomain}
-      />
-      <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
+    <header className="sticky top-0 z-30 bg-bg/78 backdrop-blur-[14px]">
+      <div className="container-site flex flex-wrap items-center gap-x-5.5 gap-y-3 py-3.5">
+        <HeaderMenuMobileToggle />
+        <Link
+          to="/"
+          prefetch="intent"
+          aria-label={shop.name}
+          className="flex flex-none items-center"
+        >
+          <Logo
+            src={shop.brand?.logo?.image?.url ?? FALLBACK_LOGO_URL}
+            alt={shop.name}
+          />
+        </Link>
+
+        <HeaderSearch />
+
+        <HeaderMenu
+          menu={menu}
+          viewport="desktop"
+          primaryDomainUrl={shop.primaryDomain.url}
+          publicStoreDomain={publicStoreDomain}
+        />
+
+        <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+          <Suspense fallback={<SignedOutCtas />}>
+            <Await resolve={isLoggedIn} errorElement={<SignedOutCtas />}>
+              {(loggedIn) =>
+                loggedIn ? (
+                  <>
+                    <Suspense fallback={<AccountChip customer={null} />}>
+                      <Await resolve={customer} errorElement={null}>
+                        {(resolved) => <AccountChip customer={resolved} />}
+                      </Await>
+                    </Suspense>
+                    <CartToggle cart={cart} />
+                  </>
+                ) : (
+                  <SignedOutCtas />
+                )
+              }
+            </Await>
+          </Suspense>
+        </div>
+      </div>
     </header>
+  );
+}
+
+/**
+ * The source logo is dark-on-white; this inverts it and tints it violet so
+ * it sits on the dark header (the "Violeta" option from the design).
+ * @param {{src: string; alt: string}}
+ */
+function Logo({src, alt}) {
+  const [failed, setFailed] = useState(false);
+  const ref = useRef(null);
+
+  // The image can fail before hydration attaches onError, so check once.
+  useEffect(() => {
+    const img = ref.current;
+    if (img?.complete && img.naturalWidth === 0) setFailed(true);
+  }, []);
+
+  if (failed) {
+    return (
+      <span className="text-[22px] font-semibold tracking-[-.02em] text-accent-400">
+        {alt}
+      </span>
+    );
+  }
+
+  return (
+    <span className="relative isolate block h-[34px] mix-blend-lighten">
+      <img
+        ref={ref}
+        src={src}
+        alt={alt}
+        height={34}
+        onError={() => setFailed(true)}
+        className="block h-[34px] w-auto [filter:grayscale(1)_invert(1)_contrast(1.6)]"
+      />
+      <span className="absolute inset-0 bg-accent-500 mix-blend-multiply" />
+    </span>
+  );
+}
+
+function HeaderSearch() {
+  return (
+    <Form
+      method="get"
+      action="/search"
+      role="search"
+      className="relative order-last flex w-full items-center md:order-none md:max-w-[560px] md:flex-[1_1_280px]"
+    >
+      <MagnifyingGlass
+        size={17}
+        className="pointer-events-none absolute left-3 text-neutral-500"
+      />
+      <label htmlFor="header-search" className="sr-only">
+        Buscar productos
+      </label>
+      <input
+        id="header-search"
+        className="input bg-surface/80 pl-[38px]"
+        type="search"
+        name="q"
+        placeholder="Buscar por modelo, SKU o marca"
+        autoComplete="off"
+      />
+    </Form>
   );
 }
 
@@ -38,20 +154,27 @@ export function HeaderMenu({
   viewport,
   publicStoreDomain,
 }) {
-  const className = `header-menu-${viewport}`;
   const {close} = useAside();
+  const isDesktop = viewport === 'desktop';
 
   return (
-    <nav className={className} role="navigation">
-      {viewport === 'mobile' && (
+    <nav
+      className={
+        isDesktop
+          ? 'ml-auto hidden items-center gap-5 text-sm md:flex'
+          : 'flex flex-col gap-1 px-5.5 pb-6 text-base'
+      }
+      role="navigation"
+    >
+      {!isDesktop && (
         <NavLink
           end
           onClick={close}
           prefetch="intent"
-          style={activeLinkStyle}
           to="/"
+          className={navLinkClass(viewport)}
         >
-          Home
+          Inicio
         </NavLink>
       )}
       {(menu || FALLBACK_HEADER_MENU).items.map((item) => {
@@ -66,12 +189,11 @@ export function HeaderMenu({
             : item.url;
         return (
           <NavLink
-            className="header-menu-item"
+            className={navLinkClass(viewport)}
             end
             key={item.id}
             onClick={close}
             prefetch="intent"
-            style={activeLinkStyle}
             to={url}
           >
             {item.title}
@@ -82,23 +204,76 @@ export function HeaderMenu({
   );
 }
 
-/**
- * @param {Pick<HeaderProps, 'isLoggedIn' | 'cart'>}
- */
-function HeaderCtas({isLoggedIn, cart}) {
+/** @param {Viewport} viewport */
+function navLinkClass(viewport) {
+  const base =
+    viewport === 'desktop'
+      ? 'whitespace-nowrap'
+      : 'rounded-md px-2.5 py-2.5 hover:bg-text/6';
+  return ({isActive, isPending}) =>
+    `${base} ${
+      isActive
+        ? 'text-text'
+        : isPending
+          ? 'text-neutral-600'
+          : 'text-neutral-400'
+    } hover:text-accent-400`;
+}
+
+function SignedOutCtas() {
   return (
-    <nav className="header-ctas" role="navigation">
-      <HeaderMenuMobileToggle />
-      <NavLink prefetch="intent" to="/account" style={activeLinkStyle}>
-        <Suspense fallback="Sign in">
-          <Await resolve={isLoggedIn} errorElement="Sign in">
-            {(isLoggedIn) => (isLoggedIn ? 'Account' : 'Sign in')}
-          </Await>
-        </Suspense>
-      </NavLink>
-      <SearchToggle />
-      <CartToggle cart={cart} />
-    </nav>
+    <>
+      <Link
+        to="/account/login"
+        className="btn btn-secondary px-3.5 max-sm:hidden"
+      >
+        <LockSimple size={16} />
+        Ingresar
+      </Link>
+      <Link to="/account/login" className="btn btn-secondary px-3 sm:hidden">
+        <LockSimple size={16} />
+        <span className="sr-only">Ingresar</span>
+      </Link>
+      <Link to="/solicitar-cuenta" className="btn btn-brand">
+        Solicitar cuenta
+      </Link>
+    </>
+  );
+}
+
+/**
+ * @param {{customer: CustomerHeaderQuery['customer'] | null}}
+ */
+function AccountChip({customer}) {
+  const company = customer?.companyContacts?.nodes?.[0]?.company?.name;
+  const person = [customer?.firstName, customer?.lastName]
+    .filter(Boolean)
+    .join(' ');
+  const title = company || person || customer?.displayName || 'Mi cuenta';
+  const initials =
+    title
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase() || 'EST';
+
+  return (
+    <Link
+      to="/account"
+      prefetch="intent"
+      className="flex animate-pop-in items-center gap-2.5 rounded-full bg-surface py-1 pr-3 pl-1 text-text shadow-sm hover:text-text hover:shadow-[0_0_0_1px_var(--color-accent-700)]"
+    >
+      <span className="grid size-8 place-items-center rounded-full bg-accent-800 text-xs font-semibold text-accent-200">
+        {initials}
+      </span>
+      <span className="flex flex-col leading-[1.2] max-sm:hidden">
+        <span className="max-w-[180px] truncate text-[13px] font-medium">
+          {title}
+        </span>
+        <span className="text-[11px] text-accent-300">Cuenta mayorista</span>
+      </span>
+    </Link>
   );
 }
 
@@ -106,19 +281,12 @@ function HeaderMenuMobileToggle() {
   const {open} = useAside();
   return (
     <button
-      className="header-menu-mobile-toggle reset"
+      type="button"
+      className="btn btn-icon btn-secondary border-0 md:hidden"
       onClick={() => open('mobile')}
+      aria-label="Abrir menú"
     >
-      <h3>☰</h3>
-    </button>
-  );
-}
-
-function SearchToggle() {
-  const {open} = useAside();
-  return (
-    <button className="reset" onClick={() => open('search')}>
-      Search
+      <List size={20} />
     </button>
   );
 }
@@ -133,6 +301,8 @@ function CartBadge({count}) {
   return (
     <a
       href="/cart"
+      aria-label={`Orden de compra (${count} productos)`}
+      className="btn btn-secondary relative h-10 w-[42px] p-0"
       onClick={(e) => {
         e.preventDefault();
         open('cart');
@@ -144,7 +314,15 @@ function CartBadge({count}) {
         });
       }}
     >
-      Cart <span aria-label={`(items: ${count})`}>{count}</span>
+      <ShoppingCartSimple size={19} />
+      {count ? (
+        <span
+          key={count}
+          className="absolute -top-1.5 -right-1.5 grid h-[18px] min-w-[18px] animate-bump place-items-center rounded-[9px] bg-brand px-[5px] text-[11px] font-semibold text-neutral-100 shadow-[0_0_0_2px_var(--color-bg)]"
+        >
+          {count}
+        </span>
+      ) : null}
     </a>
   );
 }
@@ -168,60 +346,39 @@ function CartBanner() {
   return <CartBadge count={cart?.totalQuantity ?? 0} />;
 }
 
+/** Shown until a "main-menu" navigation is set up in Shopify admin. */
 const FALLBACK_HEADER_MENU = {
-  id: 'gid://shopify/Menu/199655587896',
+  id: 'fallback-main-menu',
   items: [
     {
-      id: 'gid://shopify/MenuItem/461609500728',
+      id: 'fallback-catalogo',
       resourceId: null,
       tags: [],
-      title: 'Collections',
+      title: 'Catálogo',
+      type: 'HTTP',
+      url: '/collections/all',
+      items: [],
+    },
+    {
+      id: 'fallback-categorias',
+      resourceId: null,
+      tags: [],
+      title: 'Categorías',
       type: 'HTTP',
       url: '/collections',
       items: [],
     },
     {
-      id: 'gid://shopify/MenuItem/461609533496',
+      id: 'fallback-servicio-tecnico',
       resourceId: null,
       tags: [],
-      title: 'Blog',
-      type: 'HTTP',
-      url: '/blogs/journal',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609566264',
-      resourceId: null,
-      tags: [],
-      title: 'Policies',
-      type: 'HTTP',
-      url: '/policies',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609599032',
-      resourceId: 'gid://shopify/Page/92591030328',
-      tags: [],
-      title: 'About',
+      title: 'Servicio técnico',
       type: 'PAGE',
-      url: '/pages/about',
+      url: '/pages/servicio-tecnico',
       items: [],
     },
   ],
 };
-
-/**
- * @param {{
- *   isActive: boolean;
- *   isPending: boolean;
- * }}
- */
-function activeLinkStyle({isActive, isPending}) {
-  return {
-    fontWeight: isActive ? 'bold' : undefined,
-    color: isPending ? 'grey' : 'black',
-  };
-}
 
 /** @typedef {'desktop' | 'mobile'} Viewport */
 /**
@@ -229,9 +386,11 @@ function activeLinkStyle({isActive, isPending}) {
  * @property {HeaderQuery} header
  * @property {Promise<CartApiQueryFragment|null>} cart
  * @property {Promise<boolean>} isLoggedIn
+ * @property {Promise<CustomerHeaderQuery['customer'] | null>} customer
  * @property {string} publicStoreDomain
  */
 
 /** @typedef {import('@shopify/hydrogen').CartViewPayload} CartViewPayload */
 /** @typedef {import('storefrontapi.generated').HeaderQuery} HeaderQuery */
 /** @typedef {import('storefrontapi.generated').CartApiQueryFragment} CartApiQueryFragment */
+/** @typedef {import('customer-accountapi.generated').CustomerHeaderQuery} CustomerHeaderQuery */

@@ -27,7 +27,7 @@ export default function Policies() {
   const {policies} = useLoaderData();
 
   return (
-    <div className="policies">
+    <div className="policies container-site page-default">
       <h1>Policies</h1>
       <div>
         {policies.map((policy) => (
