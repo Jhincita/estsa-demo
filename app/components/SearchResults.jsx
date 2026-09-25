@@ -1,5 +1,6 @@
 import {Link} from 'react-router';
-import {Image, Money, Pagination} from '@shopify/hydrogen';
+import {Pagination} from '@shopify/hydrogen';
+import {ProductCard} from '~/components/catalog/ProductCard';
 import {urlWithTrackingParams} from '~/lib/search';
 
 /**
@@ -28,7 +29,7 @@ function SearchResultsArticles({term, articles}) {
 
   return (
     <div className="search-result">
-      <h2>Articles</h2>
+      <h2>Artículos</h2>
       <div>
         {articles?.nodes?.map((article) => {
           const articleUrl = urlWithTrackingParams({
@@ -61,7 +62,7 @@ function SearchResultsPages({term, pages}) {
 
   return (
     <div className="search-result">
-      <h2>Pages</h2>
+      <h2>Páginas</h2>
       <div>
         {pages?.nodes?.map((page) => {
           const pageUrl = urlWithTrackingParams({
@@ -85,70 +86,48 @@ function SearchResultsPages({term, pages}) {
 }
 
 /**
- * @param {PartialSearchResult<'products'>}
+ * @param {PartialSearchResult<'products'> & {isLoggedIn: boolean}}
  */
-function SearchResultsProducts({term, products}) {
+function SearchResultsProducts({products, isLoggedIn}) {
   if (!products?.nodes.length) {
     return null;
   }
 
   return (
     <div className="search-result">
-      <h2>Products</h2>
+      <h2>Productos</h2>
       <Pagination connection={products}>
-        {({nodes, isLoading, NextLink, PreviousLink}) => {
-          const ItemsMarkup = nodes.map((product) => {
-            const productUrl = urlWithTrackingParams({
-              baseUrl: `/products/${product.handle}`,
-              trackingParams: product.trackingParameters,
-              term,
-            });
-
-            const price = product?.selectedOrFirstAvailableVariant?.price;
-            const image = product?.selectedOrFirstAvailableVariant?.image;
-
-            return (
-              <div className="search-results-item" key={product.id}>
-                <Link prefetch="intent" to={productUrl}>
-                  {image && (
-                    <Image data={image} alt={product.title} width={50} />
-                  )}
-                  <div>
-                    <p>{product.title}</p>
-                    <small>{price && <Money data={price} />}</small>
-                  </div>
-                </Link>
-              </div>
-            );
-          });
-
-          return (
-            <div>
-              <div>
-                <PreviousLink>
-                  {isLoading ? 'Loading...' : <span>↑ Load previous</span>}
-                </PreviousLink>
-              </div>
-              <div>
-                {ItemsMarkup}
-                <br />
-              </div>
-              <div>
-                <NextLink>
-                  {isLoading ? 'Loading...' : <span>Load more ↓</span>}
-                </NextLink>
-              </div>
+        {({nodes, isLoading, NextLink, PreviousLink}) => (
+          <div className="flex flex-col gap-4">
+            <PreviousLink className="btn btn-secondary self-center">
+              {isLoading ? 'Cargando…' : 'Ver anteriores'}
+            </PreviousLink>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(236px,1fr))] gap-4">
+              {nodes.map((product, index) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isLoggedIn={isLoggedIn}
+                  index={index}
+                />
+              ))}
             </div>
-          );
-        }}
+            <NextLink className="btn btn-secondary self-center">
+              {isLoading ? 'Cargando…' : 'Ver más'}
+            </NextLink>
+          </div>
+        )}
       </Pagination>
-      <br />
     </div>
   );
 }
 
 function SearchResultsEmpty() {
-  return <p>No results, try a different search.</p>;
+  return (
+    <p className="text-neutral-400">
+      Sin resultados. Prueba con otro modelo, SKU o marca.
+    </p>
+  );
 }
 
 /** @typedef {RegularSearchReturn['result']['items']} SearchItems */

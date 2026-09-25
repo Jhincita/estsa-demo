@@ -3,12 +3,14 @@ import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
 import {SearchResults} from '~/components/SearchResults';
 import {getEmptyPredictiveSearchResult} from '~/lib/search';
+import {CATALOG_PRODUCT_FRAGMENT} from '~/lib/catalog';
+import {redactProductPrices} from '~/lib/b2b';
 
 /**
  * @type {Route.MetaFunction}
  */
 export const meta = () => {
-  return [{title: `Hydrogen | Search`}];
+  return [{title: `EST SA | Búsqueda`}];
 };
 
 /**
@@ -17,16 +19,18 @@ export const meta = () => {
 export async function loader({request, context}) {
   const url = new URL(request.url);
   const isPredictive = url.searchParams.has('predictive');
-  const searchPromise = isPredictive
-    ? predictiveSearch({request, context})
-    : regularSearch({request, context});
+  const [isLoggedIn, search] = await Promise.all([
+    context.customerAccount.isLoggedIn(),
+    isPredictive
+      ? predictiveSearch({request, context})
+      : regularSearch({request, context}),
+  ]);
 
-  searchPromise.catch((error) => {
-    console.error(error);
-    return {term: '', result: null, error: error.message};
-  });
-
-  return await searchPromise;
+  // Wholesale prices are only sent to signed-in customers.
+  return {
+    ...(isLoggedIn ? search : redactProductPrices(search)),
+    isLoggedIn,
+  };
 }
 
 /**
@@ -34,35 +38,44 @@ export async function loader({request, context}) {
  */
 export default function SearchPage() {
   /** @type {LoaderReturnData} */
-  const {type, term, result, error} = useLoaderData();
+  const {type, term, result, error, isLoggedIn} = useLoaderData();
   if (type === 'predictive') return null;
 
   return (
-    <div className="search">
-      <h1>Search</h1>
-      <SearchForm>
+    <div className="search container-site page-default">
+      <span className="kicker">Búsqueda</span>
+      <h1 className="mt-2">
+        {term ? <>Resultados para “{term}”</> : 'Buscar en el catálogo'}
+      </h1>
+      <SearchForm className="mb-8 flex max-w-[560px] gap-2">
         {({inputRef}) => (
           <>
             <input
+              className="input"
               defaultValue={term}
               name="q"
-              placeholder="Search…"
+              placeholder="Modelo, SKU o marca"
               ref={inputRef}
               type="search"
             />
-            &nbsp;
-            <button type="submit">Search</button>
+            <button type="submit" className="btn btn-brand">
+              Buscar
+            </button>
           </>
         )}
       </SearchForm>
-      {error && <p style={{color: 'red'}}>{error}</p>}
+      {error && <p className="text-[oklch(0.7_0.17_25)]">{error}</p>}
       {!term || !result?.total ? (
         <SearchResults.Empty />
       ) : (
         <SearchResults result={result} term={term}>
           {({articles, pages, products, term}) => (
             <div>
-              <SearchResults.Products products={products} term={term} />
+              <SearchResults.Products
+                products={products}
+                term={term}
+                isLoggedIn={isLoggedIn}
+              />
               <SearchResults.Pages pages={pages} term={term} />
               <SearchResults.Articles articles={articles} term={term} />
             </div>
@@ -81,41 +94,9 @@ export default function SearchPage() {
 const SEARCH_PRODUCT_FRAGMENT = `#graphql
   fragment SearchProduct on Product {
     __typename
-    handle
-    id
     publishedAt
-    title
     trackingParameters
-    vendor
-    selectedOrFirstAvailableVariant(
-      selectedOptions: []
-      ignoreUnknownOptions: true
-      caseInsensitiveMatch: true
-    ) {
-      id
-      image {
-        url
-        altText
-        width
-        height
-      }
-      price {
-        amount
-        currencyCode
-      }
-      compareAtPrice {
-        amount
-        currencyCode
-      }
-      selectedOptions {
-        name
-        value
-      }
-      product {
-        handle
-        title
-      }
-    }
+    ...CatalogProduct
   }
 `;
 
@@ -202,6 +183,7 @@ export const SEARCH_QUERY = `#graphql
     }
   }
   ${SEARCH_PRODUCT_FRAGMENT}
+  ${CATALOG_PRODUCT_FRAGMENT}
   ${SEARCH_PAGE_FRAGMENT}
   ${SEARCH_ARTICLE_FRAGMENT}
   ${PAGE_INFO_FRAGMENT}

@@ -11,10 +11,9 @@ import {
 } from 'react-router';
 import favicon from '~/assets/favicon.svg';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
-import resetStyles from '~/styles/reset.css?url';
-import appStyles from '~/styles/app.css?url';
 import tailwindCss from './styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
+import {CUSTOMER_HEADER_QUERY} from '~/graphql/customer-account/CustomerHeaderQuery';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -133,9 +132,27 @@ function loadDeferredData({context}) {
       console.error(error);
       return null;
     });
+  const isLoggedIn = customerAccount.isLoggedIn();
+
+  // Name shown in the header account chip. Resolves to null for guests.
+  const customer = isLoggedIn
+    .then((loggedIn) =>
+      loggedIn
+        ? customerAccount.query(CUSTOMER_HEADER_QUERY, {
+            variables: {language: customerAccount.i18n.language},
+          })
+        : null,
+    )
+    .then((result) => result?.data?.customer ?? null)
+    .catch((error) => {
+      console.error(error);
+      return null;
+    });
+
   return {
     cart: cart.get(),
-    isLoggedIn: customerAccount.isLoggedIn(),
+    isLoggedIn,
+    customer,
     footer,
   };
 }
@@ -147,13 +164,12 @@ export function Layout({children}) {
   const nonce = useNonce();
 
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="theme-color" content="#14131d" />
         <link rel="stylesheet" href={tailwindCss}></link>
-        <link rel="stylesheet" href={resetStyles}></link>
-        <link rel="stylesheet" href={appStyles}></link>
         <Meta />
         <Links />
       </head>
@@ -200,8 +216,8 @@ export function ErrorBoundary() {
   }
 
   return (
-    <div className="route-error">
-      <h1>Oops</h1>
+    <div className="route-error container-site page-default">
+      <h1>Algo salió mal</h1>
       <h2>{errorStatus}</h2>
       {errorMessage && (
         <fieldset>

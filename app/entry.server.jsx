@@ -22,6 +22,14 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    // Fallback header logo is served from the EST SA site until a logo is
+    // uploaded in Shopify admin (Settings → Brand).
+    imgSrc: [
+      "'self'",
+      'data:',
+      'https://cdn.shopify.com',
+      'https://www.estsa.cl',
+    ],
   });
 
   const body = await renderToReadableStream(

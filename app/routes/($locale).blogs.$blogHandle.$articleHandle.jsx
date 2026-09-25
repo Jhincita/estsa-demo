@@ -6,7 +6,7 @@ import {redirectIfHandleIsLocalized} from '~/lib/redirect';
  * @type {Route.MetaFunction}
  */
 export const meta = ({data}) => {
-  return [{title: `Hydrogen | ${data?.article.title ?? ''} article`}];
+  return [{title: `EST SA | ${data?.article.title ?? ''} article`}];
 };
 
 /**
@@ -84,7 +84,7 @@ export default function Article() {
   }).format(new Date(article.publishedAt));
 
   return (
-    <div className="article">
+    <div className="article container-site page-default">
       <h1>
         {title}
         <div>
@@ -96,7 +96,7 @@ export default function Article() {
       {image && <Image data={image} sizes="90vw" loading="eager" />}
       <div
         dangerouslySetInnerHTML={{__html: contentHtml}}
-        className="article"
+        className="rich-text mt-6 max-w-[760px]"
       />
     </div>
   );
