@@ -33,6 +33,7 @@ export const CART_QUERY_FRAGMENT = `#graphql
           ...Money
         }
         requiresShipping
+        sku
         title
         image {
           id
@@ -40,7 +41,6 @@ export const CART_QUERY_FRAGMENT = `#graphql
           altText
           width
           height
-
         }
         product {
           handle
