@@ -1,7 +1,14 @@
+import {useEffect, useRef} from 'react';
 import {Link, useLocation} from 'react-router';
 import {Pagination} from '@shopify/hydrogen';
 import {CATALOG_SORTS, PAGINATION_PARAMS} from '~/lib/catalog';
-import {Barcode, Check, LockSimple, Storefront} from '~/components/Icons';
+import {
+  Barcode,
+  CaretDown,
+  Check,
+  LockSimple,
+  Storefront,
+} from '~/components/Icons';
 import {CategoryIcon} from '~/components/catalog/CategoryIcon';
 import {ProductCard} from '~/components/catalog/ProductCard';
 
@@ -44,42 +51,11 @@ export function Catalog({catalog, isLoggedIn, id}) {
 
         {catalog.vendors.length ? (
           <FilterGroup title="Marca">
-            {catalog.vendors.map((vendor) => {
-              const on = params.vendors.includes(vendor.name);
-              return (
-                <Link
-                  key={vendor.name}
-                  to={hrefWith((sp) => toggleValue(sp, 'marca', vendor.name))}
-                  preventScrollReset
-                  replace
-                  role="checkbox"
-                  aria-checked={on}
-                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[7px] text-sm text-text hover:bg-text/6 hover:text-text"
-                >
-                  <span
-                    className={`grid size-4 place-items-center rounded-sm border-[1.5px] transition-all duration-150 ${
-                      on
-                        ? 'border-accent-500 bg-brand'
-                        : 'border-neutral-700 bg-transparent'
-                    }`}
-                  >
-                    {on ? (
-                      <Check
-                        size={11}
-                        weight="bold"
-                        className="text-neutral-100"
-                      />
-                    ) : null}
-                  </span>
-                  <span className="flex-1">{vendor.name}</span>
-                  {vendor.count != null ? (
-                    <span className="text-xs tabular-nums text-neutral-500">
-                      {vendor.count}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
+            <VendorDropdown
+              vendors={catalog.vendors}
+              selected={params.vendors}
+              hrefWith={hrefWith}
+            />
           </FilterGroup>
         ) : null}
 
@@ -244,6 +220,113 @@ function FilterGroup({title, children}) {
       <span className="kicker mb-2">{title}</span>
       {children}
     </div>
+  );
+}
+
+/**
+ * Multi-select brand filter collapsed into a dropdown so a long vendor list
+ * doesn't push the rest of the sidebar down (especially on mobile). Built on
+ * <details> so it works before hydration; each option is still a link.
+ * @param {{
+ *   vendors: Catalog['vendors'];
+ *   selected: string[];
+ *   hrefWith: ReturnType<typeof useCatalogHref>;
+ * }}
+ */
+function VendorDropdown({vendors, selected, hrefWith}) {
+  const ref = useRef(/** @type {HTMLDetailsElement | null} */ (null));
+
+  useEffect(() => {
+    /** @param {PointerEvent} event */
+    function onPointerDown(event) {
+      const el = ref.current;
+      if (el?.open && !el.contains(/** @type {Node} */ (event.target))) {
+        el.open = false;
+      }
+    }
+    /** @param {KeyboardEvent} event */
+    function onKeyDown(event) {
+      const el = ref.current;
+      if (event.key === 'Escape' && el?.open) {
+        el.open = false;
+        el.querySelector('summary')?.focus();
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+
+  const summary =
+    selected.length === 0
+      ? 'Todas las marcas'
+      : selected.length === 1
+        ? selected[0]
+        : `${selected.length} marcas`;
+
+  return (
+    <details ref={ref} className="group relative">
+      <summary className="flex w-full cursor-pointer list-none items-center gap-2.5 rounded-md bg-surface px-2.5 py-2 text-sm text-text shadow-[0_0_0_1px_var(--color-neutral-800)] hover:bg-text/6 group-open:shadow-[0_0_0_1px_var(--color-accent-500)] [&::-webkit-details-marker]:hidden">
+        <span
+          className={`flex-1 truncate ${
+            selected.length ? 'text-text' : 'text-neutral-400'
+          }`}
+        >
+          {summary}
+        </span>
+        <CaretDown
+          size={14}
+          className="flex-none text-neutral-500 transition-transform duration-150 group-open:rotate-180"
+        />
+      </summary>
+      <div className="absolute inset-x-0 top-full z-20 mt-1.5 flex max-h-72 flex-col gap-0.5 overflow-y-auto overscroll-contain rounded-md bg-surface p-1 shadow-[0_0_0_1px_var(--color-neutral-800),0_12px_32px_rgb(0_0_0/0.35)]">
+        {vendors.map((vendor) => {
+          const on = selected.includes(vendor.name);
+          return (
+            <Link
+              key={vendor.name}
+              to={hrefWith((sp) => toggleValue(sp, 'marca', vendor.name))}
+              preventScrollReset
+              replace
+              role="checkbox"
+              aria-checked={on}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[7px] text-sm text-text hover:bg-text/6 hover:text-text"
+            >
+              <span
+                className={`grid size-4 flex-none place-items-center rounded-sm border-[1.5px] transition-all duration-150 ${
+                  on
+                    ? 'border-accent-500 bg-brand'
+                    : 'border-neutral-700 bg-transparent'
+                }`}
+              >
+                {on ? (
+                  <Check size={11} weight="bold" className="text-neutral-100" />
+                ) : null}
+              </span>
+              <span className="flex-1 truncate">{vendor.name}</span>
+              {vendor.count != null ? (
+                <span className="text-xs tabular-nums text-neutral-500">
+                  {vendor.count}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+        {selected.length ? (
+          <Link
+            to={hrefWith((sp) => sp.delete('marca'))}
+            preventScrollReset
+            replace
+            className="mt-0.5 rounded-md px-2.5 py-[7px] text-left text-[13px] text-neutral-400 shadow-[0_-1px_0_var(--color-neutral-800)] hover:bg-text/6 hover:text-text"
+          >
+            Quitar filtro de marca
+          </Link>
+        ) : null}
+      </div>
+    </details>
   );
 }
 
