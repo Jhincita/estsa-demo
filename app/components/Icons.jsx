@@ -7,6 +7,7 @@ export {
   ArrowDown,
   ArrowRight,
   Barcode,
+  CaretDown,
   BellSimple,
   Check,
   CheckCircle,
