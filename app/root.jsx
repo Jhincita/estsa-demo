@@ -13,6 +13,7 @@ import favicon from '~/assets/favicon.ico';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
 import tailwindCss from './styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
+import {THEME_INIT_SCRIPT} from './components/ThemeToggle';
 import {CUSTOMER_HEADER_QUERY} from '~/graphql/customer-account/CustomerHeaderQuery';
 
 /**
@@ -164,9 +165,13 @@ export function Layout({children}) {
   const nonce = useNonce();
 
   return (
-    <html lang="es">
+    <html lang="es" data-theme="dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{__html: THEME_INIT_SCRIPT}}
+        />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <meta name="theme-color" content="#14131d" />
         <link rel="stylesheet" href={tailwindCss}></link>

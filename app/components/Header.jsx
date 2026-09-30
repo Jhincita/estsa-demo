@@ -2,6 +2,7 @@ import {Suspense, useEffect, useRef, useState} from 'react';
 import {Await, Form, Link, NavLink, useAsyncValue} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
+import {ThemeToggle} from '~/components/ThemeToggle';
 import {
   List,
   LockSimple,
@@ -40,7 +41,7 @@ export function Header({
           <img
             src={EstLogo}
             alt={shop.name}
-            className="h-[34px] w-auto"
+            className="site-logo h-[34px] w-auto"
           />
         </Link>
 
@@ -54,6 +55,7 @@ export function Header({
         />
 
         <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+          <ThemeToggle />
           <Suspense fallback={<SignedOutCtas />}>
             <Await resolve={isLoggedIn} errorElement={<SignedOutCtas />}>
               {(loggedIn) =>
@@ -284,7 +286,7 @@ function CartBadge({count}) {
       {count ? (
         <span
           key={count}
-          className="absolute -top-1.5 -right-1.5 grid h-[18px] min-w-[18px] animate-bump place-items-center rounded-[9px] bg-brand px-[5px] text-[11px] font-semibold text-neutral-100 shadow-[0_0_0_2px_var(--color-bg)]"
+          className="absolute -top-1.5 -right-1.5 grid h-[18px] min-w-[18px] animate-bump place-items-center rounded-[9px] bg-brand px-[5px] text-[11px] font-semibold text-on-brand shadow-[0_0_0_2px_var(--color-bg)]"
         >
           {count}
         </span>

@@ -76,7 +76,7 @@ export function Catalog({catalog, isLoggedIn, id}) {
             }`}
           >
             <span
-              className={`absolute top-0.5 size-4 rounded-full bg-neutral-100 transition-[left] duration-200 ${
+              className={`absolute top-0.5 size-4 rounded-full bg-on-brand transition-[left] duration-200 ${
                 params.inStock ? 'left-4' : 'left-0.5'
               }`}
             />
@@ -303,7 +303,7 @@ function VendorDropdown({vendors, selected, hrefWith}) {
                 }`}
               >
                 {on ? (
-                  <Check size={11} weight="bold" className="text-neutral-100" />
+                  <Check size={11} weight="bold" className="text-on-brand" />
                 ) : null}
               </span>
               <span className="flex-1 truncate">{vendor.name}</span>
