@@ -1,4 +1,4 @@
-import {useLoaderData} from 'react-router';
+import {Link, useLoaderData} from 'react-router';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -7,17 +7,18 @@ import {
   getAdjacentAndFirstAvailableVariants,
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
-import {ProductPrice} from '~/components/ProductPrice';
 import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {formatMoney, redactProductPrices} from '~/lib/b2b';
+import {LockSimple} from '~/components/Icons';
 
 /**
  * @type {Route.MetaFunction}
  */
 export const meta = ({data}) => {
   return [
-    {title: `Hydrogen | ${data?.product.title ?? ''}`},
+    {title: `EST SA | ${data?.product.title ?? ''}`},
     {
       rel: 'canonical',
       href: `/products/${data?.product.handle}`,
@@ -51,11 +52,11 @@ async function loadCriticalData({context, params, request}) {
     throw new Error('Expected product handle to be defined');
   }
 
-  const [{product}] = await Promise.all([
+  const [{product}, isLoggedIn] = await Promise.all([
     storefront.query(PRODUCT_QUERY, {
       variables: {handle, selectedOptions: getSelectedProductOptions(request)},
     }),
-    // Add other queries here, so that they are loaded in parallel
+    context.customerAccount.isLoggedIn(),
   ]);
 
   if (!product?.id) {
@@ -66,7 +67,9 @@ async function loadCriticalData({context, params, request}) {
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
   return {
-    product,
+    // Wholesale prices are only sent to signed-in customers.
+    product: isLoggedIn ? product : redactProductPrices(product),
+    isLoggedIn,
   };
 }
 
@@ -85,7 +88,7 @@ function loadDeferredData({context, params}) {
 
 export default function Product() {
   /** @type {LoaderReturnData} */
-  const {product} = useLoaderData();
+  const {product, isLoggedIn} = useLoaderData();
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -103,30 +106,57 @@ export default function Product() {
     selectedOrFirstAvailableVariant: selectedVariant,
   });
 
-  const {title, descriptionHtml} = product;
+  const {title, vendor, descriptionHtml} = product;
+  const inStock = Boolean(selectedVariant?.availableForSale);
 
   return (
-    <div className="product">
-      <ProductImage image={selectedVariant?.image} />
-      <div className="product-main">
-        <h1>{title}</h1>
-        <ProductPrice
-          price={selectedVariant?.price}
-          compareAtPrice={selectedVariant?.compareAtPrice}
-        />
-        <br />
+    <div className="product container-site grid gap-10 pt-8 pb-18 md:grid-cols-2 md:gap-14">
+      <ProductImage image={selectedVariant?.image} title={title} />
+      <div className="product-main flex flex-col gap-5 self-start md:sticky md:top-24">
+        <nav className="text-[13px] text-neutral-500" aria-label="Migas">
+          <Link to="/collections/all" className="text-neutral-400">
+            Catálogo
+          </Link>
+          <span className="mx-2">/</span>
+          <span>{vendor}</span>
+        </nav>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs tracking-[.1em] text-accent-300 uppercase">
+            {vendor}
+          </span>
+          <h1 className="m-0 text-[clamp(26px,3vw,36px)] leading-[1.1] tracking-[-.02em] text-balance">
+            {title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-neutral-400">
+            {selectedVariant?.sku ? (
+              <span className="tabular-nums">SKU {selectedVariant.sku}</span>
+            ) : null}
+            <span className="flex items-center gap-1.5">
+              <span
+                className={`size-1.5 rounded-full ${inStock ? 'bg-success-dot' : 'bg-neutral-600'}`}
+              />
+              {inStock ? 'En stock' : 'Sin stock'}
+            </span>
+          </div>
+        </div>
+
+        <PriceBox variant={selectedVariant} isLoggedIn={isLoggedIn} />
+
         <ProductForm
           productOptions={productOptions}
           selectedVariant={selectedVariant}
+          isLoggedIn={isLoggedIn}
         />
-        <br />
-        <br />
-        <p>
-          <strong>Description</strong>
-        </p>
-        <br />
-        <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />
-        <br />
+
+        {descriptionHtml ? (
+          <div className="fade-rule-top pt-5">
+            <span className="kicker mb-3">Descripción</span>
+            <div
+              className="rich-text"
+              dangerouslySetInnerHTML={{__html: descriptionHtml}}
+            />
+          </div>
+        ) : null}
       </div>
       <Analytics.ProductView
         data={{
@@ -134,7 +164,7 @@ export default function Product() {
             {
               id: product.id,
               title: product.title,
-              price: selectedVariant?.price.amount || '0',
+              price: selectedVariant?.price?.amount || '0',
               vendor: product.vendor,
               variantId: selectedVariant?.id || '',
               variantTitle: selectedVariant?.title || '',
@@ -143,6 +173,48 @@ export default function Product() {
           ],
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * @param {{
+ *   variant: ProductFragment['selectedOrFirstAvailableVariant'];
+ *   isLoggedIn: boolean;
+ * }}
+ */
+function PriceBox({variant, isLoggedIn}) {
+  if (!isLoggedIn || !variant?.price) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-md bg-neutral-900 px-4 py-3">
+        <span className="flex flex-col gap-px">
+          <span className="text-[11px] text-neutral-500">Precio mayorista</span>
+          <span
+            aria-hidden="true"
+            className="select-none text-2xl font-semibold text-neutral-300 blur-[6px]"
+          >
+            $888.888
+          </span>
+        </span>
+        <Link to="/account/login" className="btn btn-ghost">
+          <LockSimple size={15} />
+          Ver precio
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex animate-fade-up items-baseline gap-3">
+      <span className="text-[28px] font-semibold tracking-[-.01em] tabular-nums">
+        {formatMoney(variant.price)}
+      </span>
+      {variant.compareAtPrice ? (
+        <s className="text-sm text-neutral-500 tabular-nums">
+          {formatMoney(variant.compareAtPrice)}
+        </s>
+      ) : null}
+      <span className="text-xs text-neutral-500">neto unitario · + IVA</span>
     </div>
   );
 }
@@ -239,5 +311,6 @@ const PRODUCT_QUERY = `#graphql
   ${PRODUCT_FRAGMENT}
 `;
 
-/** @typedef {import('./+types/products.$handle').Route} Route */
+/** @typedef {import('./+types/($locale).products.$handle').Route} Route */
+/** @typedef {import('storefrontapi.generated').ProductFragment} ProductFragment */
 /** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

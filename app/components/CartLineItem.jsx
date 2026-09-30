@@ -1,8 +1,9 @@
 import {CartForm, Image} from '@shopify/hydrogen';
 import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
-import {ProductPrice} from './ProductPrice';
 import {useAside} from './Aside';
+import {formatMoney} from '~/lib/b2b';
+import {Minus, Package, Plus, Trash} from '~/components/Icons';
 
 /**
  * A single line item in the cart. It displays the product image, title, price.
@@ -22,55 +23,66 @@ export function CartLineItem({layout, line, childrenMap}) {
   const {close} = useAside();
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
+  const variantTitle = title && title !== 'Default Title' ? title : null;
 
   return (
-    <li key={id} className="cart-line">
-      <div className="cart-line-inner">
-        {image && (
-          <Image
-            alt={title}
-            aspectRatio="1/1"
-            data={image}
-            height={100}
-            loading="lazy"
-            width={100}
-          />
-        )}
+    <li key={id} className="cart-line fade-rule-bottom py-3.5">
+      <div className="flex gap-3">
+        <span className="grid size-[52px] flex-none place-items-center overflow-hidden rounded-[10px] bg-neutral-900 text-neutral-600">
+          {image ? (
+            <Image
+              alt={title}
+              aspectRatio="1/1"
+              data={image}
+              height={52}
+              width={52}
+              loading="lazy"
+              className="size-full object-contain"
+            />
+          ) : (
+            <Package size={24} />
+          )}
+        </span>
 
-        <div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <Link
             prefetch="intent"
             to={lineItemUrl}
+            className="text-sm leading-[1.3] text-text hover:text-accent-200"
             onClick={() => {
               if (layout === 'aside') {
                 close();
               }
             }}
           >
-            <p>
-              <strong>{product.title}</strong>
-            </p>
+            {product.title}
           </Link>
-          <ProductPrice price={line?.cost?.totalAmount} />
-          <ul>
-            {selectedOptions.map((option) => (
-              <li key={option.name}>
-                <small>
-                  {option.name}: {option.value}
-                </small>
-              </li>
-            ))}
-          </ul>
-          <CartLineQuantity line={line} />
+          <span className="text-[11px] text-neutral-500">
+            {[merchandise.sku, variantTitle].filter(Boolean).join(' · ')}
+            {line.cost?.amountPerQuantity ? (
+              <>
+                {merchandise.sku || variantTitle ? ' · ' : ''}
+                {formatMoney(line.cost.amountPerQuantity)} c/u
+              </>
+            ) : null}
+          </span>
+          <div className="mt-0.5 flex items-center justify-between">
+            <CartLineQuantity line={line} />
+            <span className="text-sm font-medium tabular-nums">
+              {line.cost?.totalAmount
+                ? formatMoney(line.cost.totalAmount)
+                : null}
+            </span>
+          </div>
         </div>
       </div>
 
       {lineItemChildren ? (
         <div>
           <p id={childrenLabelId} className="sr-only">
-            Line items with {product.title}
+            Productos incluidos con {product.title}
           </p>
-          <ul aria-labelledby={childrenLabelId} className="cart-line-children">
+          <ul aria-labelledby={childrenLabelId} className="pl-8">
             {lineItemChildren.map((childLine) => (
               <CartLineItem
                 childrenMap={childrenMap}
@@ -97,32 +109,36 @@ function CartLineQuantity({line}) {
   const {id: lineId, quantity, isOptimistic} = line;
   const prevQuantity = Number(Math.max(0, quantity - 1).toFixed(0));
   const nextQuantity = Number((quantity + 1).toFixed(0));
+  const stepButton =
+    'grid size-[26px] place-items-center rounded-md border-0 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 disabled:opacity-40';
 
   return (
-    <div className="cart-line-quantity">
-      <small>Quantity: {quantity} &nbsp;&nbsp;</small>
+    <div className="flex items-center gap-0.5">
       <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
         <button
-          aria-label="Decrease quantity"
+          aria-label="Disminuir cantidad"
           disabled={quantity <= 1 || !!isOptimistic}
           name="decrease-quantity"
           value={prevQuantity}
+          className={stepButton}
         >
-          <span>&#8722; </span>
+          <Minus size={13} />
         </button>
       </CartLineUpdateButton>
-      &nbsp;
+      <span className="min-w-[30px] text-center text-[13px] tabular-nums">
+        {quantity}
+      </span>
       <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
         <button
-          aria-label="Increase quantity"
+          aria-label="Aumentar cantidad"
           name="increase-quantity"
           value={nextQuantity}
           disabled={!!isOptimistic}
+          className={stepButton}
         >
-          <span>&#43;</span>
+          <Plus size={13} />
         </button>
       </CartLineUpdateButton>
-      &nbsp;
       <CartLineRemoveButton lineIds={[lineId]} disabled={!!isOptimistic} />
     </div>
   );
@@ -145,8 +161,13 @@ function CartLineRemoveButton({lineIds, disabled}) {
       action={CartForm.ACTIONS.LinesRemove}
       inputs={{lineIds}}
     >
-      <button disabled={disabled} type="submit">
-        Remove
+      <button
+        disabled={disabled}
+        type="submit"
+        aria-label="Quitar de la orden"
+        className="ml-1 grid size-[26px] place-items-center rounded-md border-0 bg-transparent text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300 disabled:opacity-40"
+      >
+        <Trash size={14} />
       </button>
     </CartForm>
   );

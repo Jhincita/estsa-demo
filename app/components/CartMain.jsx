@@ -3,10 +3,11 @@ import {Link} from 'react-router';
 import {useAside} from '~/components/Aside';
 import {CartLineItem} from '~/components/CartLineItem';
 import {CartSummary} from './CartSummary';
+import {ShoppingCartSimple} from '~/components/Icons';
 /**
  * Returns a map of all line items and their children.
  * @param {CartLine[]} lines
- * @return {import("C:/Users/jhinc/WebstormProjects/estsa/est-sa/app/components/CartMain").LineItemChildrenMap}
+ * @return {LineItemChildrenMap}
  */
 function getLineItemChildrenMap(lines) {
   const children = {};
@@ -37,25 +38,30 @@ export function CartMain({layout, cart: originalCart}) {
   const cart = useOptimisticCart(originalCart);
 
   const linesCount = Boolean(cart?.lines?.nodes?.length || 0);
-  const withDiscount =
-    cart &&
-    Boolean(cart?.discountCodes?.filter((code) => code.applicable)?.length);
-  const className = `cart-main ${withDiscount ? 'with-discount' : ''}`;
   const cartHasItems = cart?.totalQuantity ? cart.totalQuantity > 0 : false;
   const childrenMap = getLineItemChildrenMap(cart?.lines?.nodes ?? []);
 
   return (
     <section
-      className={className}
-      aria-label={layout === 'page' ? 'Cart page' : 'Cart drawer'}
+      className={
+        layout === 'aside'
+          ? 'flex min-h-0 flex-1 flex-col'
+          : 'grid items-start gap-8 lg:grid-cols-[1fr_400px]'
+      }
+      aria-label={layout === 'page' ? 'Orden de compra' : 'Carro'}
     >
       <CartEmpty hidden={linesCount} layout={layout} />
-      <div className="cart-details">
+      <div
+        className={
+          layout === 'aside' ? 'min-h-0 flex-1 overflow-y-auto px-5.5' : ''
+        }
+        hidden={!linesCount}
+      >
         <p id="cart-lines" className="sr-only">
-          Line items
+          Productos
         </p>
         <div>
-          <ul aria-labelledby="cart-lines">
+          <ul aria-labelledby="cart-lines" className="flex flex-col">
             {(cart?.lines?.nodes ?? []).map((line) => {
               // we do not render non-parent lines at the root of the cart
               if (
@@ -75,8 +81,8 @@ export function CartMain({layout, cart: originalCart}) {
             })}
           </ul>
         </div>
-        {cartHasItems && <CartSummary cart={cart} layout={layout} />}
       </div>
+      {cartHasItems && <CartSummary cart={cart} layout={layout} />}
     </section>
   );
 }
@@ -87,18 +93,22 @@ export function CartMain({layout, cart: originalCart}) {
  *   layout?: CartMainProps['layout'];
  * }}
  */
-function CartEmpty({hidden = false}) {
+function CartEmpty({hidden = false, layout}) {
   const {close} = useAside();
   return (
-    <div hidden={hidden}>
-      <br />
-      <p>
-        Looks like you haven&rsquo;t added anything yet, let&rsquo;s get you
-        started!
-      </p>
-      <br />
-      <Link to="/collections" onClick={close} prefetch="viewport">
-        Continue shopping →
+    <div
+      hidden={hidden}
+      className={`flex flex-col gap-2 py-10 text-neutral-400 ${layout === 'aside' ? 'px-5.5' : ''}`}
+    >
+      <ShoppingCartSimple size={30} className="text-neutral-600" />
+      Tu orden está vacía.
+      <Link
+        to="/collections/all"
+        onClick={close}
+        prefetch="viewport"
+        className="btn btn-ghost self-start"
+      >
+        Ir al catálogo →
       </Link>
     </div>
   );

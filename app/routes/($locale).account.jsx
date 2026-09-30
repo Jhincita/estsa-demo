@@ -47,7 +47,7 @@ export default function AccountLayout() {
     : 'Account Details';
 
   return (
-    <div className="account">
+    <div className="account container-site page-default">
       <h1>{heading}</h1>
       <br />
       <AccountMenu />

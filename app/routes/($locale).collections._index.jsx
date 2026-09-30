@@ -1,5 +1,7 @@
 import {useLoaderData, Link} from 'react-router';
 import {getPaginationVariables, Image} from '@shopify/hydrogen';
+import {ArrowRight} from '~/components/Icons';
+import {CategoryIcon} from '~/components/catalog/CategoryIcon';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 
 /**
@@ -50,8 +52,9 @@ export default function Collections() {
   const {collections} = useLoaderData();
 
   return (
-    <div className="collections">
-      <h1>Collections</h1>
+    <div className="collections container-site page-default">
+      <span className="kicker">Catálogo</span>
+      <h1 className="mt-2">Categorías</h1>
       <PaginatedResourceSection
         connection={collections}
         resourcesClassName="collections-grid"
@@ -77,21 +80,33 @@ export default function Collections() {
 function CollectionItem({collection, index}) {
   return (
     <Link
-      className="collection-item"
+      className="collection-item group flex flex-col overflow-hidden rounded-lg bg-surface text-text shadow-sm transition-[transform,box-shadow] duration-250 hover:-translate-y-[3px] hover:text-text hover:shadow-[0_0_0_1px_var(--color-accent-700),0_14px_34px_rgba(0,0,0,.45)]"
       key={collection.id}
       to={`/collections/${collection.handle}`}
       prefetch="intent"
     >
-      {collection?.image && (
-        <Image
-          alt={collection.image.altText || collection.title}
-          aspectRatio="1/1"
-          data={collection.image}
-          loading={index < 3 ? 'eager' : undefined}
-          sizes="(min-width: 45em) 400px, 100vw"
-        />
-      )}
-      <h5>{collection.title}</h5>
+      <div className="grid aspect-[4/3] place-items-center bg-[radial-gradient(120%_90%_at_50%_20%,color-mix(in_srgb,var(--color-neutral-800)_70%,var(--color-surface)),var(--color-surface))]">
+        {collection?.image ? (
+          <Image
+            alt={collection.image.altText || collection.title}
+            aspectRatio="4/3"
+            data={collection.image}
+            loading={index < 3 ? 'eager' : undefined}
+            sizes="(min-width: 45em) 400px, 100vw"
+            className="h-full w-full rounded-none object-cover"
+          />
+        ) : (
+          <CategoryIcon
+            name={collection.title}
+            size={56}
+            className="text-neutral-700"
+          />
+        )}
+      </div>
+      <span className="flex items-center justify-between gap-2 px-4 py-3.5 text-base font-medium">
+        {collection.title}
+        <ArrowRight size={16} className="text-accent-300" />
+      </span>
     </Link>
   );
 }

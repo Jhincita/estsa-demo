@@ -6,34 +6,43 @@ import {Await, NavLink} from 'react-router';
  */
 export function Footer({footer: footerPromise, header, publicStoreDomain}) {
   return (
-    <Suspense>
-      <Await resolve={footerPromise}>
-        {(footer) => (
-          <footer className="footer">
-            {footer?.menu && header.shop.primaryDomain?.url && (
-              <FooterMenu
-                menu={footer.menu}
-                primaryDomainUrl={header.shop.primaryDomain.url}
-                publicStoreDomain={publicStoreDomain}
-              />
-            )}
-          </footer>
-        )}
-      </Await>
-    </Suspense>
+    <footer className="fade-rule-top mt-auto">
+      <div className="container-site flex flex-wrap items-center gap-x-10 gap-y-4 py-7 text-[13px] text-neutral-500">
+        <span className="font-medium text-neutral-300">
+          {header?.shop.name ?? 'EST SA'}
+        </span>
+        <span>Soluciones de identificación automática · Santiago, Chile</span>
+        <Suspense>
+          <Await resolve={footerPromise}>
+            {(footer) =>
+              header?.shop.primaryDomain?.url ? (
+                <FooterMenu
+                  menu={footer?.menu}
+                  primaryDomainUrl={header.shop.primaryDomain.url}
+                  publicStoreDomain={publicStoreDomain}
+                />
+              ) : null
+            }
+          </Await>
+        </Suspense>
+        <span className="md:ml-auto">
+          Precios netos en CLP, no incluyen IVA. Sujetos a stock.
+        </span>
+      </div>
+    </footer>
   );
 }
 
 /**
  * @param {{
- *   menu: FooterQuery['menu'];
+ *   menu: FooterQuery['menu'] | undefined;
  *   primaryDomainUrl: FooterProps['header']['shop']['primaryDomain']['url'];
  *   publicStoreDomain: string;
  * }}
  */
 function FooterMenu({menu, primaryDomainUrl, publicStoreDomain}) {
   return (
-    <nav className="footer-menu" role="navigation">
+    <nav className="flex flex-wrap gap-x-5 gap-y-2" role="navigation">
       {(menu || FALLBACK_FOOTER_MENU).items.map((item) => {
         if (!item.url) return null;
         // if the url is internal, we strip the domain
@@ -45,7 +54,13 @@ function FooterMenu({menu, primaryDomainUrl, publicStoreDomain}) {
             : item.url;
         const isExternal = !url.startsWith('/');
         return isExternal ? (
-          <a href={url} key={item.id} rel="noopener noreferrer" target="_blank">
+          <a
+            href={url}
+            key={item.id}
+            rel="noopener noreferrer"
+            target="_blank"
+            className="text-neutral-400 hover:text-accent-300"
+          >
             {item.title}
           </a>
         ) : (
@@ -53,8 +68,10 @@ function FooterMenu({menu, primaryDomainUrl, publicStoreDomain}) {
             end
             key={item.id}
             prefetch="intent"
-            style={activeLinkStyle}
             to={url}
+            className={({isActive}) =>
+              `${isActive ? 'text-text' : 'text-neutral-400'} hover:text-accent-300`
+            }
           >
             {item.title}
           </NavLink>
@@ -64,60 +81,39 @@ function FooterMenu({menu, primaryDomainUrl, publicStoreDomain}) {
   );
 }
 
+/** Shown until a "footer" navigation is set up in Shopify admin. */
 const FALLBACK_FOOTER_MENU = {
-  id: 'gid://shopify/Menu/199655620664',
+  id: 'fallback-footer-menu',
   items: [
     {
-      id: 'gid://shopify/MenuItem/461633060920',
-      resourceId: 'gid://shopify/ShopPolicy/23358046264',
+      id: 'fallback-privacy',
+      resourceId: null,
       tags: [],
-      title: 'Privacy Policy',
+      title: 'Privacidad',
       type: 'SHOP_POLICY',
       url: '/policies/privacy-policy',
       items: [],
     },
     {
-      id: 'gid://shopify/MenuItem/461633093688',
-      resourceId: 'gid://shopify/ShopPolicy/23358013496',
+      id: 'fallback-shipping',
+      resourceId: null,
       tags: [],
-      title: 'Refund Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/refund-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633126456',
-      resourceId: 'gid://shopify/ShopPolicy/23358111800',
-      tags: [],
-      title: 'Shipping Policy',
+      title: 'Despacho',
       type: 'SHOP_POLICY',
       url: '/policies/shipping-policy',
       items: [],
     },
     {
-      id: 'gid://shopify/MenuItem/461633159224',
-      resourceId: 'gid://shopify/ShopPolicy/23358079032',
+      id: 'fallback-terms',
+      resourceId: null,
       tags: [],
-      title: 'Terms of Service',
+      title: 'Términos',
       type: 'SHOP_POLICY',
       url: '/policies/terms-of-service',
       items: [],
     },
   ],
 };
-
-/**
- * @param {{
- *   isActive: boolean;
- *   isPending: boolean;
- * }}
- */
-function activeLinkStyle({isActive, isPending}) {
-  return {
-    fontWeight: isActive ? 'bold' : undefined,
-    color: isPending ? 'grey' : 'white',
-  };
-}
 
 /**
  * @typedef {Object} FooterProps
