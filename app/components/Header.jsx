@@ -9,6 +9,8 @@ import {
   ShoppingCartSimple,
 } from '~/components/Icons';
 
+import EstLogo from "~/assets/estsasvg.svg";
+
 /** Used until a logo is uploaded in Shopify admin → Settings → Brand. */
 const FALLBACK_LOGO_URL =
   'https://www.estsa.cl/catalogo/img/estsa-logo-1619559287.jpg';
@@ -35,9 +37,10 @@ export function Header({
           aria-label={shop.name}
           className="flex flex-none items-center"
         >
-          <Logo
-            src={shop.brand?.logo?.image?.url ?? FALLBACK_LOGO_URL}
+          <img
+            src={EstLogo}
             alt={shop.name}
+            className="h-[34px] w-auto"
           />
         </Link>
 
@@ -75,43 +78,6 @@ export function Header({
   );
 }
 
-/**
- * The source logo is dark-on-white; this inverts it and tints it violet so
- * it sits on the dark header (the "Violeta" option from the design).
- * @param {{src: string; alt: string}}
- */
-function Logo({src, alt}) {
-  const [failed, setFailed] = useState(false);
-  const ref = useRef(null);
-
-  // The image can fail before hydration attaches onError, so check once.
-  useEffect(() => {
-    const img = ref.current;
-    if (img?.complete && img.naturalWidth === 0) setFailed(true);
-  }, []);
-
-  if (failed) {
-    return (
-      <span className="text-[22px] font-semibold tracking-[-.02em] text-accent-400">
-        {alt}
-      </span>
-    );
-  }
-
-  return (
-    <span className="relative isolate block h-[34px] mix-blend-lighten">
-      <img
-        ref={ref}
-        src={src}
-        alt={alt}
-        height={34}
-        onError={() => setFailed(true)}
-        className="block h-[34px] w-auto [filter:grayscale(1)_invert(1)_contrast(1.6)]"
-      />
-      <span className="absolute inset-0 bg-accent-500 mix-blend-multiply" />
-    </span>
-  );
-}
 
 function HeaderSearch() {
   return (
