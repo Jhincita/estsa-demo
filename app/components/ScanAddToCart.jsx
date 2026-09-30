@@ -73,7 +73,7 @@ function ScanButton({fetcher, label, disabled, onAdded}) {
     <button
       type="submit"
       disabled={disabled || busy}
-      className={`relative flex h-[38px] w-full items-center justify-center gap-2 overflow-hidden rounded-md border px-3 text-sm font-medium text-neutral-100 transition-[background,filter] duration-200 hover:brightness-110 disabled:cursor-default ${
+      className={`relative flex h-[38px] w-full items-center justify-center gap-2 overflow-hidden rounded-md border px-3 text-sm font-medium text-on-brand transition-[background,filter] duration-200 hover:brightness-110 disabled:cursor-default ${
         done ? 'border-success bg-success' : 'border-brand bg-brand'
       }`}
     >

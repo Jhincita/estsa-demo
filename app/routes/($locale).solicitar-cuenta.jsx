@@ -189,7 +189,7 @@ export default function RequestAccount() {
             >
               {submitting ? (
                 <>
-                  <span className="size-4 animate-spin rounded-full border-2 border-neutral-100/30 border-t-neutral-100" />
+                  <span className="size-4 animate-spin rounded-full border-2 border-on-brand/30 border-t-on-brand" />
                   Enviando…
                 </>
               ) : (
